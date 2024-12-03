@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, Trophy, Clock, Brain, Target } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Question {
   question: string;
@@ -11,13 +14,13 @@ interface Question {
 
 const Quiz = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(0);
-  const [userAnswers, setUserAnswers] = useState<any>({});
-  const [isActive, setIsActive] = useState<any>(false);
-  const [showResults, setShowResults] = useState<any>(false);
-  const [loading, setLoading] = useState<any>(false);
-  const [timer, setTimer] = useState<any>(0);
-  const [questionTimes, setQuestionTimes] = useState<any>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [timer, setTimer] = useState<number>(0);
+  const [questionTimes, setQuestionTimes] = useState<number[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +33,7 @@ const Quiz = () => {
 
     try {
       const response = await fetch("/api/quiz");
-      if (!response.ok) {
-        throw new Error("Failed to fetch questions");
-      }
-
+      if (!response.ok) throw new Error("Failed to fetch questions");
       const data = await response.json();
       setQuestions(data);
       setIsActive(true);
@@ -47,14 +47,14 @@ const Quiz = () => {
   };
 
   const handleAnswerSelect = (selectedOption: string) => {
-    setUserAnswers((prev: any) => ({
+    setUserAnswers((prev) => ({
       ...prev,
       [currentQuestion]: selectedOption,
     }));
-    setQuestionTimes((prev: any) => [...prev, timer]);
+    setQuestionTimes((prev) => [...prev, timer]);
 
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion((prev: any) => prev + 1);
+      setCurrentQuestion((prev) => prev + 1);
       setTimer(0);
     } else {
       setIsActive(false);
@@ -64,10 +64,10 @@ const Quiz = () => {
 
   const calculateStats = () => {
     let correct = 0;
-    questions.forEach((q: any, index: number) => {
+    questions.forEach((q, index) => {
       if (
         userAnswers[index] ===
-        q.options.find((opt: any) => opt.correct === "true").text
+        q.options.find((opt) => opt.correct === "true")?.text
       )
         correct++;
     });
@@ -76,9 +76,9 @@ const Quiz = () => {
       totalQuestions: questions.length,
       correctAnswers: correct,
       percentage: Math.round((correct / questions.length) * 100),
-      totalTime: questionTimes.reduce((a: any, b: any) => a + b, 0),
+      totalTime: questionTimes.reduce((a, b) => a + b, 0),
       averageTime: Math.round(
-        questionTimes.reduce((a: any, b: any) => a + b, 0) / questions.length
+        questionTimes.reduce((a, b) => a + b, 0) / questions.length
       ),
     };
   };
@@ -90,99 +90,197 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
+    let interval: NodeJS.Timeout;
     if (isActive) {
       interval = setInterval(() => {
-        setTimer((prev: any) => prev + 1);
+        setTimer((prev) => prev + 1);
       }, 1000);
-    } else {
-      clearInterval(interval);
     }
     return () => clearInterval(interval);
   }, [isActive]);
 
   return (
-    <div className='p-4'>
-      <form onSubmit={handleSubmit} className='space-y-6'>
-        <Button type='submit' className='w-full' disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              Loading Quiz...
-            </>
-          ) : (
-            "Start Quiz"
-          )}
-        </Button>
-      </form>
-
-      {isActive && (
-        <div className='mt-8'>
-          <p className='text-lg font-medium mb-4'>
-            {questions[currentQuestion].question}
-          </p>
-          <div className='space-y-2'>
-            {questions[currentQuestion].options.map((option: any) => (
-              <Button
-                key={option.text}
-                className='w-full text-left justify-start'
-                variant='outline'
-                onClick={() => handleAnswerSelect(option.text)}
-              >
-                {option.text}
-              </Button>
-            ))}
-          </div>
-          <p className='mt-2 text-sm'>Time: {formatTime(timer)}</p>
-        </div>
-      )}
-
-      {showResults && (
-        <div className='mt-8'>
-          <h2 className='text-xl font-bold mb-4'>Results</h2>
-          {questions.map((q: any, index: number) => (
-            <div
-              key={index}
-              className='p-4 rounded-lg bg-gray-50 border border-gray-100'
+    <div className='container mx-auto max-w-3xl py-8 px-4'>
+      <Card className='mb-8'>
+        <CardHeader>
+          <CardTitle className='text-2xl text-center'>
+            Interactive Quiz Challenge
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <Button
+              type='submit'
+              className='w-full'
+              size='lg'
+              disabled={loading}
             >
-              <p className='font-medium'>
-                {index + 1}. {q.question}
-              </p>
-              <p className='mt-2 text-sm'>
-                Your answer:{" "}
-                <span
-                  className={
-                    userAnswers[index] ===
-                    q.options.find((opt: any) => opt.correct === "true").text
-                      ? "text-green-600 font-medium"
-                      : "text-red-600 font-medium"
-                  }
-                >
-                  {userAnswers[index]}
-                </span>
-              </p>
-              {userAnswers[index] !==
-                q.options.find((opt: any) => opt.correct === "true").text && (
-                <p className='mt-1 text-sm text-green-600'>
-                  Correct answer:{" "}
-                  {q.options.find((opt: any) => opt.correct === "true").text}
-                </p>
+              {loading ? (
+                <>
+                  <Loader2 className='mr-2 h-5 w-5 animate-spin' />
+                  Loading Quiz...
+                </>
+              ) : (
+                "Start Quiz"
               )}
-              <p className='text-xs text-gray-500 mt-1'>
-                Time taken: {formatTime(questionTimes[index])}
-              </p>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <AnimatePresence mode='wait'>
+        {isActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className='space-y-6'
+          >
+            <div className='flex items-center justify-between mb-4'>
+              <span className='text-sm font-medium'>
+                Question {currentQuestion + 1} of {questions.length}
+              </span>
+              <span className='text-sm font-medium flex items-center'>
+                <Clock className='w-4 h-4 mr-1' />
+                {formatTime(timer)}
+              </span>
             </div>
-          ))}
-          <div className='mt-4'>
-            <h3>Summary</h3>
-            <p>Total Questions: {calculateStats().totalQuestions}</p>
-            <p>Correct Answers: {calculateStats().correctAnswers}</p>
-            <p>Percentage: {calculateStats().percentage}%</p>
-            <p>Total Time: {formatTime(calculateStats().totalTime)}</p>
-            <p>Average Time: {formatTime(calculateStats().averageTime)}</p>
-          </div>
-        </div>
-      )}
+
+            <Progress
+              value={(currentQuestion / questions.length) * 100}
+              className='mb-6'
+            />
+
+            <Card>
+              <CardContent className='pt-6'>
+                <h2 className='text-xl font-semibold mb-4'>
+                  {questions[currentQuestion].question}
+                </h2>
+                <div className='space-y-3'>
+                  {questions[currentQuestion].options.map((option) => (
+                    <Button
+                      key={option.text}
+                      className='w-full text-left justify-start h-auto py-4 px-6'
+                      variant='outline'
+                      onClick={() => handleAnswerSelect(option.text)}
+                    >
+                      {option.text}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {showResults && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className='space-y-6'
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Trophy className='h-6 w-6 text-yellow-500' />
+                  Quiz Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+                  <Card>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <Target className='h-8 w-8 mb-2 mx-auto text-blue-500' />
+                        <div className='text-2xl font-bold'>
+                          {calculateStats().percentage}%
+                        </div>
+                        <p className='text-sm text-muted-foreground'>
+                          Accuracy Rate
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <Brain className='h-8 w-8 mb-2 mx-auto text-green-500' />
+                        <div className='text-2xl font-bold'>
+                          {calculateStats().correctAnswers}/
+                          {calculateStats().totalQuestions}
+                        </div>
+                        <p className='text-sm text-muted-foreground'>
+                          Correct Answers
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className='pt-6'>
+                      <div className='text-center'>
+                        <Clock className='h-8 w-8 mb-2 mx-auto text-purple-500' />
+                        <div className='text-2xl font-bold'>
+                          {formatTime(calculateStats().averageTime)}
+                        </div>
+                        <p className='text-sm text-muted-foreground'>
+                          Avg. Time per Question
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className='space-y-4'>
+                  {questions.map((q, index) => {
+                    const isCorrect =
+                      userAnswers[index] ===
+                      q.options.find((opt) => opt.correct === "true")?.text;
+                    return (
+                      <Card
+                        key={index}
+                        className={`border-l-4 ${
+                          isCorrect ? "border-l-green-500" : "border-l-red-500"
+                        }`}
+                      >
+                        <CardContent className='pt-6'>
+                          <p className='font-medium mb-2'>
+                            {index + 1}. {q.question}
+                          </p>
+                          <p className='text-sm'>
+                            Your answer:{" "}
+                            <span
+                              className={
+                                isCorrect
+                                  ? "text-green-600 font-medium"
+                                  : "text-red-600 font-medium"
+                              }
+                            >
+                              {userAnswers[index]}
+                            </span>
+                          </p>
+                          {!isCorrect && (
+                            <p className='text-sm text-green-600 mt-1'>
+                              Correct answer:{" "}
+                              {
+                                q.options.find((opt) => opt.correct === "true")
+                                  ?.text
+                              }
+                            </p>
+                          )}
+                          <p className='text-xs text-muted-foreground mt-2'>
+                            Time taken: {formatTime(questionTimes[index])}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
