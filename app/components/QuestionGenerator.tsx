@@ -1,9 +1,18 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Trophy, Clock, Brain, Target } from "lucide-react";
+import {
+  Loader2,
+  Trophy,
+  Clock,
+  Brain,
+  Target,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -100,18 +109,18 @@ const Quiz = () => {
   }, [isActive]);
 
   return (
-    <div className='container mx-auto max-w-3xl py-8 px-4'>
-      <Card className='mb-8'>
+    <div className='container mx-auto max-w-4xl py-8 px-4'>
+      <Card className='mb-8 text-white'>
         <CardHeader>
-          <CardTitle className='text-2xl text-center'>
-            Interactive Quiz Challenge
+          <CardTitle className='text-3xl font-bold text-center'>
+            Start Daily GEN AI Quiz
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <Button
               type='submit'
-              className='w-full'
+              className='w-full transition-colors duration-200'
               size='lg'
               disabled={loading}
             >
@@ -140,7 +149,7 @@ const Quiz = () => {
               <span className='text-sm font-medium'>
                 Question {currentQuestion + 1} of {questions.length}
               </span>
-              <span className='text-sm font-medium flex items-center'>
+              <span className='text-sm font-medium flex items-center bg-purple-100 text-purple-700 px-3 py-1 rounded-full'>
                 <Clock className='w-4 h-4 mr-1' />
                 {formatTime(timer)}
               </span>
@@ -148,19 +157,19 @@ const Quiz = () => {
 
             <Progress
               value={(currentQuestion / questions.length) * 100}
-              className='mb-6'
+              className='mb-6 h-2'
             />
 
-            <Card>
+            <Card className='border-2 border-purple-200 shadow-lg'>
               <CardContent className='pt-6'>
-                <h2 className='text-xl font-semibold mb-4'>
+                <h2 className='text-xl font-semibold mb-4 text-purple-700'>
                   {questions[currentQuestion].question}
                 </h2>
                 <div className='space-y-3'>
                   {questions[currentQuestion].options.map((option) => (
                     <Button
                       key={option.text}
-                      className='w-full text-left justify-start h-auto py-4 px-6'
+                      className='w-full text-left justify-start h-auto py-4 px-6 hover:bg-purple-50 transition-colors duration-200'
                       variant='outline'
                       onClick={() => handleAnswerSelect(option.text)}
                     >
@@ -180,52 +189,46 @@ const Quiz = () => {
             exit={{ opacity: 0, y: -20 }}
             className='space-y-6'
           >
-            <Card>
+            <Card className='border-2 border-purple-200 shadow-lg'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Trophy className='h-6 w-6 text-yellow-500' />
+                <CardTitle className='flex items-center gap-2 text-2xl text-purple-700'>
+                  <Trophy className='h-8 w-8 text-yellow-500' />
                   Quiz Results
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
-                  <Card>
+                  <Card className='bg-gradient-to-br from-blue-500 to-purple-600 text-white'>
                     <CardContent className='pt-6'>
                       <div className='text-center'>
-                        <Target className='h-8 w-8 mb-2 mx-auto text-blue-500' />
-                        <div className='text-2xl font-bold'>
+                        <Target className='h-12 w-12 mb-2 mx-auto' />
+                        <div className='text-3xl font-bold'>
                           {calculateStats().percentage}%
                         </div>
-                        <p className='text-sm text-muted-foreground'>
-                          Accuracy Rate
-                        </p>
+                        <p className='text-sm'>Accuracy Rate</p>
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className='bg-gradient-to-br from-green-500 to-teal-600 text-white'>
                     <CardContent className='pt-6'>
                       <div className='text-center'>
-                        <Brain className='h-8 w-8 mb-2 mx-auto text-green-500' />
-                        <div className='text-2xl font-bold'>
+                        <Brain className='h-12 w-12 mb-2 mx-auto' />
+                        <div className='text-3xl font-bold'>
                           {calculateStats().correctAnswers}/
                           {calculateStats().totalQuestions}
                         </div>
-                        <p className='text-sm text-muted-foreground'>
-                          Correct Answers
-                        </p>
+                        <p className='text-sm'>Correct Answers</p>
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className='bg-gradient-to-br from-purple-500 to-pink-600 text-white'>
                     <CardContent className='pt-6'>
                       <div className='text-center'>
-                        <Clock className='h-8 w-8 mb-2 mx-auto text-purple-500' />
-                        <div className='text-2xl font-bold'>
+                        <Clock className='h-12 w-12 mb-2 mx-auto' />
+                        <div className='text-3xl font-bold'>
                           {formatTime(calculateStats().averageTime)}
                         </div>
-                        <p className='text-sm text-muted-foreground'>
-                          Avg. Time per Question
-                        </p>
+                        <p className='text-sm'>Avg. Time per Question</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -241,36 +244,48 @@ const Quiz = () => {
                         key={index}
                         className={`border-l-4 ${
                           isCorrect ? "border-l-green-500" : "border-l-red-500"
-                        }`}
+                        } hover:shadow-md transition-shadow duration-200`}
                       >
                         <CardContent className='pt-6'>
-                          <p className='font-medium mb-2'>
-                            {index + 1}. {q.question}
-                          </p>
-                          <p className='text-sm'>
-                            Your answer:{" "}
-                            <span
-                              className={
-                                isCorrect
-                                  ? "text-green-600 font-medium"
-                                  : "text-red-600 font-medium"
-                              }
-                            >
-                              {userAnswers[index]}
-                            </span>
-                          </p>
-                          {!isCorrect && (
-                            <p className='text-sm text-green-600 mt-1'>
-                              Correct answer:{" "}
-                              {
-                                q.options.find((opt) => opt.correct === "true")
-                                  ?.text
-                              }
-                            </p>
-                          )}
-                          <p className='text-xs text-muted-foreground mt-2'>
-                            Time taken: {formatTime(questionTimes[index])}
-                          </p>
+                          <div className='flex items-start'>
+                            <div className='flex-shrink-0 mr-4'>
+                              {isCorrect ? (
+                                <CheckCircle2 className='h-6 w-6 text-green-500' />
+                              ) : (
+                                <XCircle className='h-6 w-6 text-red-500' />
+                              )}
+                            </div>
+                            <div>
+                              <p className='font-medium mb-2 text-gray-800'>
+                                {index + 1}. {q.question}
+                              </p>
+                              <p className='text-sm'>
+                                Your answer:{" "}
+                                <span
+                                  className={
+                                    isCorrect
+                                      ? "text-green-600 font-medium"
+                                      : "text-red-600 font-medium"
+                                  }
+                                >
+                                  {userAnswers[index]}
+                                </span>
+                              </p>
+                              {!isCorrect && (
+                                <p className='text-sm text-green-600 mt-1'>
+                                  Correct answer:{" "}
+                                  {
+                                    q.options.find(
+                                      (opt) => opt.correct === "true"
+                                    )?.text
+                                  }
+                                </p>
+                              )}
+                              <p className='text-xs text-gray-500 mt-2'>
+                                Time taken: {formatTime(questionTimes[index])}
+                              </p>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     );
