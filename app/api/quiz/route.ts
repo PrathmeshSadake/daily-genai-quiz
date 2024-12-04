@@ -33,7 +33,25 @@ export async function GET() {
         { status: 500 }
       );
     }
-    const shuffledQuestions = shuffleArray(data);
+    let shuffledQuestions = shuffleArray(data);
+
+    if (data.length <= 9) {
+      const { data, error } = await supabase
+        .from("daily_genai_quiz")
+        .select("*")
+        .order("id", { ascending: false })
+        .limit(10); // Limit to 10 rows
+
+      if (error) {
+        console.error("Error fetching questions:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch questions." },
+          { status: 500 }
+        );
+      }
+      shuffledQuestions = shuffleArray(data);
+    }
+
     return NextResponse.json(shuffledQuestions, { status: 200 });
   } catch (error) {
     console.error("Unexpected error:", error);
